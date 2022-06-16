@@ -1,78 +1,81 @@
-#ifndef SHELL_H
-#define SHELL_H
+#ifndef _SHELL_H_
+#define _SHELL_H_
 
-#include <string.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
-#include <fcntl.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <limits.h>
 #include <signal.h>
 
-#define SEP_SLASH "/"
-#define SEP_EQUAL "="
-#define SEP_TPOIN ":"
-#define SEP_ESPAC " \t\r\n\a"
-#define TITLE_PATH "PATH"
-#define TITLE_DIR "PWD"
-#define TITLE_FILE "_"
 
 /**
- * struct built_t - anothers commands.
- * @comand: command.
- * @func: function to executing.
+ * struct variables - variables
+ * @av: command line arguments
+ * @buffer: buffer of command
+ * @env: environment variables
+ * @count: count of commands entered
+ * @argv: arguments at opening of shell
+ * @status: exit status
+ * @commands: double pointer to commands
  */
-typedef struct built_t
+typedef struct variables
 {
-	char *comand;
-	int (*func)(char *, char **, char *, char **, int, int);
-} built;
+	char **av;
+	char *buffer;
+	char **env;
+	size_t count;
+	char **argv;
+	int status;
+	char **commands;
+} vars_t;
 
-/* Interactive mode */
-void func_loop(char **environ, char *argv);
-int check_string(char *str, ssize_t length);
+/**
+ * struct builtins - struct for the builtin functions
+ * @name: name of builtin command
+ * @f: function for corresponding builtin
+ */
+typedef struct builtins
+{
+	char *name;
+	void (*f)(vars_t *);
+} builtins_t;
 
-/* no-Interactive mode */
-void no_interactive(char **environ, char *file);
-int arguments1(char *file, char **environ, char *s, int out);
-int check_string1(char *str, ssize_t length);
+char **make_env(char **env);
+void free_env(char **env);
 
-/* Arguments configuration */
-int arguments(char *s, char *file, char **environ, int count, int out);
-int get_command(char *s, char **av, char *fl, char **env, int count, int out);
+ssize_t _puts(char *str);
+char *_strdup(char *strtodup);
+int _strcmpr(char *strcmp1, char *strcmp2);
+char *_strcat(char *strc1, char *strc2);
+unsigned int _strlen(char *str);
 
-/* Commands structure */
-int (*builtin(char *s))(char *, char **, char *, char **, int, int);
-int ex(char *s, char **argv, char *file, char **environ, int count, int out);
-int envir(char *s, char **av, char *fl, char **env, int count, int out);
+char **tokenize(char *buffer, char *delimiter);
+char **_realloc(char **ptr, size_t *size);
+char *new_strtok(char *str, const char *delim);
 
-/* Commands search in the path */
-int search_command(char **argv, char *file, char **environ, int count);
-int divpath(char **argv, char *file, char **environ, int count);
-char *_getenv(char **environ, char *path);
-char *check_exec(char *path, char *command);
+void (*check_for_builtins(vars_t *vars))(vars_t *vars);
+void new_exit(vars_t *vars);
+void _env(vars_t *vars);
+void new_setenv(vars_t *vars);
+void new_unsetenv(vars_t *vars);
 
-/* Strings functions */
-int _strlen(char *s);
-char *_strcpy(char *dest, char *src);
-void _strcat(char *dest, char *src);
-int _strcmp(char *s1, char *s2);
+void add_key(vars_t *vars);
+char **find_key(char **env, char *key);
+char *add_value(char *key, char *value);
+int _atoi(char *str);
 
-/* Numbers functions */
-int _isdigit(char c);
-int _atoi(char *s);
+void check_for_path(vars_t *vars);
+int path_execute(char *command, vars_t *vars);
+char *find_path(char **env);
+int execute_cwd(vars_t *vars);
+int check_for_dir(char *str);
 
-/* Alloc Memory */
-void *_realloc(void *ptr, unsigned int old_size, unsigned int new_size);
-void _memcpy(char *dest, char *src, unsigned int n);
+void print_error(vars_t *vars, char *msg);
+void _puts2(char *str);
+char *_uitoa(unsigned int count);
 
-/* Print functions */
-void _putchar(char *c);
-void newline(int number);
-void printerror(char *file, char *argv, int count, char *message);
-void printnumber(int number);
-void printerrorex(char *file, char **argv, int count, char *message);
-
-#endif
+#endif /* _SHELL_H_ */
