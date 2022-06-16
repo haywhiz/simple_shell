@@ -26,7 +26,7 @@ void create_child(char **command_args)
 	else if (child == 0)
 	{ /* in the child */
 		execve(command_args[0], command_args, env_args);
-		perror("execve"); /* execve() returns only on error*/
+		perror(command_args[0]); /* execve() returns only on error*/
 		exit(1);
 	}
 	else
