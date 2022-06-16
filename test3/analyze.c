@@ -58,3 +58,4 @@ char *analyze_cmd(shell_t *shell, char *cmd)
 
 	return (cmd);
 }
+
