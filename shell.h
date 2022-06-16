@@ -1,67 +1,85 @@
 #ifndef SHELL_H
 #define SHELL_H
 
+#define BUFSIZE 1024
+#define TOKEN_BUFSIZE 128
+#define TOKEN_DELIM " \t\r\n\a"
+#define EXIT_IND 2
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <sys/wait.h>
 #include <sys/types.h>
-#include <errno.h>
-#include <stddef.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
+#include <unistd.h>
 #include <signal.h>
 
-int _putchar(char c);
-void _puts(char *str);
-int _strlen(char *s);
-char *_strdup(char *str);
-char *concat_all(char *name, char *sep, char *value);
+/**
+ * struct shell - shell data for current session
+ *
+ * @argv: argument vector
+ * @command: input command
+ * @environ: env variables
+ * @name: the program name
+ * @count: counts number of processes
+ * @exitcode: the value the code exits
+ * @pid: pid of current process
+ */
+typedef struct shell
+{
+	char **argv;
+	char *command;
+	char **environ;
+	char *name;
+	int count;
+	int exitcode;
+	char *pid;
+} shell_t;
 
-char **splitstring(char *str, const char *delim);
-void execute(char **argv);
-void *_realloc(void *ptr, unsigned int old_size, unsigned int new_size);
-
+/**
+ * struct builtin - builtins
+ *
+ * @name: name of builtin
+ * @handl: builtin handler
+ */
+typedef struct builtin
+{
+	char *name;
+	int (*handl)(shell_t *shell);
+} builtin_t;
 
 extern char **environ;
 
-/**
- * struct list_path - Linked list containing PATH directories
- * @dir: directory in path
- * @p: pointer to next node
- */
-typedef struct list_path
-{
-	char *dir;
-	struct list_path *p;
-} list_path;
+/* setup */
+void initialize(shell_t *shell, char **av);
+void uninitialize(shell_t *shell);
+void handl_signint(int sig);
+void repl(shell_t *shell);
 
+/* env */
+char *_getenv(char **_environ, const char *name);
+int _setenv(shell_t *shell, char *name, char *value, int overwrite);
 
-char *_getenv(const char *name);
-list_path *add_node_end(list_path **head, char *str);
-list_path *linkpath(char *path);
-char *_which(char *filename, list_path *head);
+/* executor */
+int parse_command(shell_t *shell, char *command);
+int execute(shell_t *shell);
 
-/**
- * struct mybuild - pointer to function with corresponding buildin command
- * @name: buildin command
- * @func: execute the buildin command
- */
-typedef struct mybuild
-{
-	char *name;
-	void (*func)(char **);
-} mybuild;
+/* builtins */
+int (*get_builtin_handl(const char *cmd))(shell_t *shell);
+int hsh_exit(shell_t *shell);
+int hsh_env(shell_t *shell);
+int hsh_cd(shell_t *shell);
+int hsh_setenv(shell_t *shell);
+int hsh_unsetenv(shell_t *shell);
 
-void(*checkbuild(char **arv))(char **arv);
-int _atoi(char *s);
-void exitt(char **arv);
-void env(char **arv);
-void _setenv(char **arv);
-void _unsetenv(char **arv);
+/* utils */
+void prompt(void);
+char *read_line(int *chr);
+char **tokenize(char *s);
+char *analyze_cmd(shell_t *shell, char *cmd);
+char *exp_variables(shell_t *shell, char *s);
 
-void freearv(char **arv);
-void free_list(list_path *head);
+/* error */
+void write_error(shell_t *shell, int status);
 
-
-#endif
+#endif /* SHELL_H */
