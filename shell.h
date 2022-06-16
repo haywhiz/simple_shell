@@ -20,11 +20,6 @@ void create_child(char **command_args);
 
 
 
-int _putchar(char c);
-void _puts(char *str);
-void sig_handler(int sig_num)
-void _EOF(int len, char *buff)
-void _isatty(void)
 
 
 #endif
