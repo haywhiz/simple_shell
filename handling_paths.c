@@ -1,162 +1,174 @@
 #include "shell.h"
 /**
- * _getenv - get env.
- * @environ: environment variables.
- * @variable: variable.
- * Return: result.
+ * path_execute - executes a command in the path
+ * @command: full path to the command
+ * @vars: pointer to struct of variables
+ *
+ * Return: 0 on success, 1 on failure
  */
-char *_getenv(char **environ, char *variable)
+int path_execute(char *command, vars_t *vars)
 {
-	int index = 0, i, length;
-	char *path = NULL, *token = NULL, *result = NULL;
+	pid_t child_pid;
 
-	length = _strlen(variable);
-	while (environ[index])
+	if (access(command, X_OK) == 0)
 	{
-		i = 0;
-		while (variable[i])
+		child_pid = fork();
+		if (child_pid == -1)
+			print_error(vars, NULL);
+		if (child_pid == 0)
 		{
-			if (variable[i] != environ[index][i])
-				break;
-			i++;
-		}
-		if (i == length)
-			break;
-		index++;
-	}
-	if (!environ[index])
-		return (NULL);
-	path = malloc(sizeof(char) * (_strlen(environ[index]) + 1));
-	if (!path)
-		return (NULL);
-	_strcpy(path, environ[index]);
-	token = strtok(path, "=");
-	token = strtok(NULL, "");
-	if (!token)
-	{
-		free(path);
-		return (NULL);
-	}
-	result = malloc(sizeof(char) * (_strlen(token) + 1));
-	if (!result)
-	{
-		free(path);
-		return (NULL);
-	}
-	_strcpy(result, token);
-	free(path);
-	return (result);
-}
-/**
- * check_exec - check exec.
- * @path: path.
- * @command: command.
- * Return: NULL.
- */
-char *check_exec(char *path, char *command)
-{
-	char *dir = NULL, *dir_command = NULL;
-	int length, entry;
-
-	dir = strtok(path, ":\n");
-	while (dir)
-	{
-		length = _strlen(dir);
-		length += _strlen(command);
-		dir_command = malloc(sizeof(char) * (length + 2));
-		if (!dir_command)
-			return (NULL);
-		dir_command[0] = '\0';
-		_strcat(dir_command, dir);
-		_strcat(dir_command, SEP_SLASH);
-		_strcat(dir_command, command);
-		entry = access(dir_command, F_OK | X_OK | R_OK);
-		if (entry == 0)
-			return (dir_command);
-		free(dir_command);
-		dir = strtok(NULL, ":\n");
-	}
-	return (NULL);
-}
-/**
- * divpath - separate the string PATH into arguments.
- * @argv: pointer string.
- * @environ: environment variables.
- * @count: execution counter.
- * @file: file
- * Return: 0
- */
-int divpath(char **argv, char *file, char **environ, int count)
-{
-	char *env = NULL, *copy = NULL;
-	pid_t mypid;
-	int state, out = 0;
-	(void)file;
-	(void)count;
-
-	env = _getenv(environ, "PATH");
-	if (!env)
-		return (-1);
-	copy = argv[0];
-	argv[0] = check_exec(env, argv[0]);
-	if (argv[0] == NULL)
-	{
-		printerror(file, copy, count, "not found");
-		if (env)
-			free(env);
-		return (127);
-	}
-	free(env);
-	mypid = fork();
-	if (mypid == 0)
-		execve(argv[0], argv, environ);
-	else
-	{
-		wait(&state);
-		free(argv[0]);
-		if (WIFEXITED(state))
-			out = WEXITSTATUS(state);
-	}
-	return (out);
-}
-/**
- * search_command - find and run a command.
- * @argv: user-given arguments.
- * @environ: environment variables.
- * @file: file
- * @count: count
- * Return: out
- */
-int search_command(char **argv, char *file, char **environ, int count)
-{
-	int entry, out = 0;
-	pid_t mypid;
-	int state;
-
-	entry = access(argv[0], F_OK | X_OK | R_OK);
-	if (entry == 0)
-	{
-		mypid = fork();
-		if (mypid == 0)
-		{
-			execve(argv[0], argv, environ);
-			exit(0);
+			if (execve(command, vars->av, vars->env) == -1)
+				print_error(vars, NULL);
 		}
 		else
 		{
-		wait(&state);
-		if (WIFEXITED(state))
-			out = WEXITSTATUS(state);
+			wait(&vars->status);
+			if (WIFEXITED(vars->status))
+				vars->status = WEXITSTATUS(vars->status);
+			else if (WIFSIGNALED(vars->status) && WTERMSIG(vars->status) == SIGINT)
+				vars->status = 130;
+			return (0);
 		}
+		vars->status = 127;
+		return (1);
 	}
 	else
 	{
-		out = divpath(argv, file, environ, count);
-		if (out == -1)
+		print_error(vars, ": Permission denied\n");
+		vars->status = 126;
+	}
+	return (0);
+}
+/**
+ * find_path - finds the PATH variable
+ * @env: array of environment variables
+ *
+ * Return: pointer to the node that contains the PATH, or NULL on failure
+ */
+char *find_path(char **env)
+{
+	char *path = "PATH=";
+	unsigned int i, j;
+
+	for (i = 0; env[i] != NULL; i++)
+	{
+		for (j = 0; j < 5; j++)
+			if (path[j] != env[i][j])
+				break;
+		if (j == 5)
+			break;
+	}
+	return (env[i]);
+}
+/**
+ * check_for_path - checks if the command is in the PATH
+ * @vars: variables
+ *
+ * Return: void
+ */
+void check_for_path(vars_t *vars)
+{
+	char *path, *path_dup = NULL, *check = NULL;
+	unsigned int i = 0, r = 0;
+	char **path_tokens;
+	struct stat buf;
+
+	if (check_for_dir(vars->av[0]))
+		r = execute_cwd(vars);
+	else
+	{
+		path = find_path(vars->env);
+		if (path != NULL)
 		{
-			printerror(file, argv[0], count, "not found");
+			path_dup = _strdup(path + 5);
+			path_tokens = tokenize(path_dup, ":");
+			for (i = 0; path_tokens && path_tokens[i]; i++, free(check))
+			{
+				check = _strcat(path_tokens[i], vars->av[0]);
+				if (stat(check, &buf) == 0)
+				{
+					r = path_execute(check, vars);
+					free(check);
+					break;
+				}
+			}
+			free(path_dup);
+			if (path_tokens == NULL)
+			{
+				vars->status = 127;
+				new_exit(vars);
+			}
+		}
+		if (path == NULL || path_tokens[i] == NULL)
+		{
+			print_error(vars, ": not found\n");
+			vars->status = 127;
+		}
+		free(path_tokens);
+	}
+	if (r == 1)
+		new_exit(vars);
+}
+/**
+ * execute_cwd - executes the command in the current working directory
+ * @vars: pointer to struct of variables
+ *
+ * Return: 0 on success, 1 on failure
+ */
+int execute_cwd(vars_t *vars)
+{
+	pid_t child_pid;
+	struct stat buf;
+
+	if (stat(vars->av[0], &buf) == 0)
+	{
+		if (access(vars->av[0], X_OK) == 0)
+		{
+			child_pid = fork();
+			if (child_pid == -1)
+				print_error(vars, NULL);
+			if (child_pid == 0)
+			{
+				if (execve(vars->av[0], vars->av, vars->env) == -1)
+					print_error(vars, NULL);
+			}
+			else
+			{
+				wait(&vars->status);
+				if (WIFEXITED(vars->status))
+					vars->status = WEXITSTATUS(vars->status);
+				else if (WIFSIGNALED(vars->status) && WTERMSIG(vars->status) == SIGINT)
+					vars->status = 130;
+				return (0);
+			}
+			vars->status = 127;
 			return (1);
 		}
+		else
+		{
+			print_error(vars, ": Permission denied\n");
+			vars->status = 126;
+		}
+		return (0);
 	}
-	return (out);
+	print_error(vars, ": not found\n");
+	vars->status = 127;
+	return (0);
+}
+/**
+ * check_for_dir - checks if the command is a part of a path
+ * @str: command
+ *
+ * Return: 1 on success, 0 on failure
+ */
+int check_for_dir(char *str)
+{
+	unsigned int i;
+
+	for (i = 0; str[i]; i++)
+	{
+		if (str[i] == '/')
+			return (1);
+	}
+	return (0);
 }
