@@ -23,7 +23,7 @@ int main(void)
 		buffer = NULL;
 		buffer_len = 0;
 
-		printf("simple_shell..$ ");
+		printf("#cisfun$ ");
 		if (getline(&buffer, &buffer_len, stdin) == -1)
 		{
 			perror("getline()"); /* end of file handled */
@@ -31,7 +31,7 @@ int main(void)
 			continue; /* a break might be ideal */
 		}
 		*(strchr(buffer, '\n')) = '\0';
-		printf("%s\n", buffer);
+		/* printf("%s\n", buffer); */
 		words = num_of_words(buffer);
 		argv = alloc_mem(buffer, words);
 		create_child(argv);
