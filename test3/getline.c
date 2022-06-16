@@ -1,6 +1,6 @@
 #include "shell.h"
 #include "util.h"
-
+#include <string.h>
 /**
  * assign_lineptr - assigns values to the lineptr
  *
@@ -22,7 +22,7 @@ void assign_lineptr(char **lineptr, size_t *n, char *buffer, size_t count)
 	}
 	else
 	{
-		_strcpy(*lineptr, buffer);
+		strcpy(*lineptr, buffer);
 		free(buffer);
 	}
 }

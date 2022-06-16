@@ -1,6 +1,7 @@
 #include "shell.h"
 #include "_string.h"
-
+#include <ctype.h>
+#include <stdlib.h>
 /**
  * hsh_exit - Exit shell
  *
@@ -13,13 +14,13 @@ int hsh_exit(shell_t *shell)
 
 	if (shell->argv[1])
 	{
-		if (!_isdigit(shell->argv[1]))
+		if (!isdigit(shell->argv[1]))
 		{
 			write_error(shell, 2);
 			return (0);
 		}
 
-		status = _atoi(shell->argv[1]);
+		status = atoi(shell->argv[1]);
 		shell->exitcode = status % 256;
 	}
 

@@ -37,7 +37,7 @@ char *_which(char **_environ, char *command)
 			write(STDERR_FILENO, ": allocation error\n", 18);
 			exit(EXIT_FAILURE);
 		}
-		_strcpy(file, spath);
+		strcpy(file, spath);
 		_strcat(file, "/");
 		_strcat(file, command);
 		_strcat(file, "\0");

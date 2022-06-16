@@ -82,4 +82,10 @@ char *exp_variables(shell_t *shell, char *s);
 /* error */
 void write_error(shell_t *shell, int status);
 
+/*functions for some errors from string_h*/
+char *_strcpy(char *dest, char *src);
+int _atoi(char *s);
+char *_itoa(int);
+int _isdigit(char *str);
+
 #endif /* SHELL_H */

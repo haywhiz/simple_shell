@@ -20,7 +20,7 @@ char *makeenv(char *var, char *val)
 	env = malloc(sizeof(char) * (len_val + len_var + 2));
 	if (!env)
 		return (NULL);
-	_strcpy(env, var);
+	strcpy(env, var);
 	_strcat(env, "=");
 	_strcat(env, val);
 	_strcat(env, "\0");
