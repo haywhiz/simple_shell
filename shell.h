@@ -1,63 +1,78 @@
-#ifndef _SHELL_H
-#define _SHELL_H
+#ifndef SHELL_H
+#define SHELL_H
 
 #include <string.h>
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <sys/types.h>
-#include <sys/wait.h>
-#include <sys/types.h>
-#include <dirent.h>
 #include <sys/stat.h>
-#include <stdarg.h>
+#include <sys/wait.h>
 #include <signal.h>
-#define PROMPT "#cisfun$ "
 
+#define SEP_SLASH "/"
+#define SEP_EQUAL "="
+#define SEP_TPOIN ":"
+#define SEP_ESPAC " \t\r\n\a"
+#define TITLE_PATH "PATH"
+#define TITLE_DIR "PWD"
+#define TITLE_FILE "_"
 
 /**
- * struct builtin_d - Defines the builtins functions.
- * @built: The name of the build in command.
- * @f: A pointer to the right builtin function.
+ * struct built_t - anothers commands.
+ * @comand: command.
+ * @func: function to executing.
  */
-typedef struct builtin_d
+typedef struct built_t
 {
-	char *built;
-	void (*f)(char *);
-} builtin_t;
+	char *comand;
+	int (*func)(char *, char **, char *, char **, int, int);
+} built;
 
-extern char **environ;
+/* Interactive mode */
+void func_loop(char **environ, char *argv);
+int check_string(char *str, ssize_t length);
 
-char **token_interface(char *, const char *, int);
-int count_token(char *, const char *);
-char **tokenize(int, char *, const char *);
-void create_child(char **, char *, int, char **);
-void parse_line(char *, size_t, int, char **);
-char *path_finder(char *);
-int str_len(char *);
-int find_path(char *);
-char **tokenize_path(int, char *);
-char *search_directories(char **, char *);
-char *build_path(char *, char *);
-void double_free(char **);
-void single_free(int, ...);
+/* no-Interactive mode */
+void no_interactive(char **environ, char *file);
+int arguments1(char *file, char **environ, char *s, int out);
+int check_string1(char *str, ssize_t length);
 
-/*Builtin functions*/
-int built_in(char **, char *);
-void (*check_built_ins(char *))(char *);
-void exit_b(char *);
-void env_b(char *);
-void cd_b(char *);
+/* Arguments configuration */
+int arguments(char *s, char *file, char **environ, int count, int out);
+int get_command(char *s, char **av, char *fl, char **env, int count, int out);
 
-/*Holberton library functions*/
-int _strcmp(char *, char *);
-char *_strdup(char *);
-void print_str(char *, int);
-int print_number(int);
-int _write_char(char);
+/* Commands structure */
+int (*builtin(char *s))(char *, char **, char *, char **, int, int);
+int ex(char *s, char **argv, char *file, char **environ, int count, int out);
+int envir(char *s, char **av, char *fl, char **env, int count, int out);
 
-/* Helper functions*/
-void error_printing(char *, int, char *);
-void exec_error(char *, int, char *);
+/* Commands search in the path */
+int search_command(char **argv, char *file, char **environ, int count);
+int divpath(char **argv, char *file, char **environ, int count);
+char *_getenv(char **environ, char *path);
+char *check_exec(char *path, char *command);
+
+/* Strings functions */
+int _strlen(char *s);
+char *_strcpy(char *dest, char *src);
+void _strcat(char *dest, char *src);
+int _strcmp(char *s1, char *s2);
+
+/* Numbers functions */
+int _isdigit(char c);
+int _atoi(char *s);
+
+/* Alloc Memory */
+void *_realloc(void *ptr, unsigned int old_size, unsigned int new_size);
+void _memcpy(char *dest, char *src, unsigned int n);
+
+/* Print functions */
+void _putchar(char *c);
+void newline(int number);
+void printerror(char *file, char *argv, int count, char *message);
+void printnumber(int number);
+void printerrorex(char *file, char **argv, int count, char *message);
 
 #endif
