@@ -6,7 +6,7 @@
  */
 
 
-int main(void)
+int sum(void)
 {
 	return (0);
 }
