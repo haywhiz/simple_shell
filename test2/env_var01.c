@@ -2,7 +2,7 @@
 #include "variable.h"
 #include "_string.h"
 #include <string.h>
-
+#include <stdlib.h>
 /**
  * var_environ - checks for environment variables and add to the linked list
  *

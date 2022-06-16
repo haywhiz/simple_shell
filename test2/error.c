@@ -1,6 +1,7 @@
 #include "shell.h"
 #include "_string.h"
-
+#include <string.h>
+#include <stdlib.h>
 /**
  * error_message - displays error message to terminal
  * @shell: shell data
@@ -20,7 +21,7 @@ void error_message(shell_t *shell, char *message, int status)
 	len = len1 + 2 + len2 + 2 + len3 + len4;
 
 	error = malloc(sizeof(char) * (len + 1));
-	_strcpy(error, shell->name);
+	strcpy(error, shell->name);
 	_strcat(error, ": ");
 	_strcat(error, count);
 	_strcat(error, ": ");
@@ -50,7 +51,7 @@ char *cd_error(shell_t *shell)
 	if (!message)
 		return (NULL);
 
-	_strcpy(message, template);
+	strcpy(message, template);
 	_strcat(message, shell->argv[1]);
 	_strcat(message, "\n\0");
 
@@ -73,7 +74,7 @@ char *exit_error(shell_t *shell)
 	if (!message)
 		return (NULL);
 
-	_strcpy(message, template);
+	strcpy(message, template);
 	_strcat(message, shell->argv[1]);
 	_strcat(message, "\n\0");
 

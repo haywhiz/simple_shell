@@ -1,7 +1,7 @@
 #include "shell.h"
 #include "_string.h"
 #include <limits.h>
-
+#include <string.h>
 /**
  * cd_to - Changes the current directory of the process
  * to a given path
@@ -67,7 +67,7 @@ void cd_prev(shell_t *shell)
 	len = _strlen(cwd) + 1;
 
 	message = malloc(sizeof(char) * (len + 1));
-	_strcpy(message, cwd);
+	strcpy(message, cwd);
 	_strcat(message, "\n\0");
 	write(STDOUT_FILENO, message, len);
 

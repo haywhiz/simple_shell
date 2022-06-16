@@ -1,6 +1,6 @@
 #include "shell.h"
 #include "_string.h"
-
+#include <stdlib.h>
 /**
  * initialize - setup shell variables
  *
