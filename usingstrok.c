@@ -1,55 +1,67 @@
 #include "shell.h"
-/**
- * get_command - pos get commands.
- * @s: string.
- * @av: pointer string.
- * @env: environment variables.
- * @count: execution counter.
- * @fl: file
- * @out: out
- * Return: out
- */
-int get_command(char *s, char **av, char *fl, char **env, int count, int out)
-{
-	int (*validar)(char *, char **, char *, char **, int, int);
 
-	validar = builtin(av[0]);
-	if (validar)
-		out = validar(s, av, fl, env, count, out);
-	else
-		out = search_command(av, fl, env, count);
-	return (out);
+/**
+ * check_match - checks if a character matches any in a string
+ * @c: character to check
+ * @str: string to check
+ *
+ * Return: 1 if match, 0 if not
+ */
+unsigned int check_match(char c, const char *str)
+{
+	unsigned int i;
+
+	for (i = 0; str[i] != '\0'; i++)
+	{
+		if (c == str[i])
+			return (1);
+	}
+	return (0);
 }
+
 /**
- * arguments - separate the user's string into arguments.
- * @s: pointer string.
- * @environ: environment variables.
- * @count: execution counter.
- * @file: file
- * @out: out
- * Return: out
+ * new_strtok - custom strtok
+ * @str: string to tokenize
+ * @delim: delimiter to tokenize against
+ *
+ * Return: pointer to the next token or NULL
  */
-int arguments(char *s, char *file, char **environ, int count, int out)
+char *new_strtok(char *str, const char *delim)
 {
-	char **argv = NULL, *token = NULL;
-	int index = 0;
+	static char *token_start;
+	static char *next_token;
+	unsigned int i;
 
-	argv = malloc(64 * sizeof(char *));
-	if (!argv)
-
+	if (str != NULL)
+		next_token = str;
+	token_start = next_token;
+	if (token_start == NULL)
+		return (NULL);
+	for (i = 0; next_token[i] != '\0'; i++)
 	{
-		perror("Error on allocation");
-		exit(0);
+		if (check_match(next_token[i], delim) == 0)
+			break;
 	}
-	token = strtok(s, SEP_ESPAC);
-	while (token)
+	if (next_token[i] == '\0' || next_token[i] == '#')
 	{
-		argv[index] = token;
-		index++;
-		token = strtok(NULL, SEP_ESPAC);
+		next_token = NULL;
+		return (NULL);
 	}
-	argv[index] = NULL;
-	out = get_command(s, argv, file, environ, count, out);
-	free(argv);
-	return (out);
+	token_start = next_token + i;
+	next_token = token_start;
+	for (i = 0; next_token[i] != '\0'; i++)
+	{
+		if (check_match(next_token[i], delim) == 1)
+			break;
+	}
+	if (next_token[i] == '\0')
+		next_token = NULL;
+	else
+	{
+		next_token[i] = '\0';
+		next_token = next_token + i + 1;
+		if (*next_token == '\0')
+			next_token = NULL;
+	}
+	return (token_start);
 }
